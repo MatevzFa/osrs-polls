@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Old School RuneScape Poll Watch</title>
+
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="/style.css">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,700,400italic|Roboto+Slab:400,700' rel='stylesheet' type='text/css'>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="/script.js"></script>
+</head>
+
+<body>
+<div class="webpage-wrapper">
+
+	<div class="header content-section">
+		<h1>Old School RuneScape Poll Watch</h1>
+		<h2><%= poll.title %></h2>
+		<h2 style="font-size: 1.3em; color: #aaa;">Voted on by <%= poll.votes %> players.</h2>
+	</div>
+
+	<div class="content-section navbar">
+		<a href="/">Home
+		<a href="/archive">Archive
+		</a>
+	</div>
+
+
+	<div id="content">
+	<% if(additionalInfo != null) { %>
+
+		<div class="content-section" style="background-color: #FFF">
+			<h3><%= additionalInfo.title %></h3>
+			<p><%= additionalInfo.message %></p>
+		</div>
+
+	<% } %>
+
+	<%
+	for(var i = 0; i < poll.results.length; i++) {
+		var total = poll.votes;
+		var skipIdx = poll.results[i].skipIdx;
+		if (skipIdx >= 0) {
+			total -= poll.results[i].answers[skipIdx].amount;
+		}
+	%>
+
+		<div class="content-section" style="background-color: <%= (poll.results[i].type === 'yes_no' ? (poll.results[i].answers[0].amount/total >= 0.75 ? '#D5FFD5' : '#FFF') : '#FFF') %>">
+
+			<h3>Question <%= i+1 %></h3>
+			<p><%= poll.results[i].question %></p>
+
+
+
+		<% if (poll.results[i].type === 'yes_no') { %>
+			<div class="answer-bar">
+				<div class="ans yes-no"><span><%= poll.results[i].answers[0].answer_text %></span></div>
+				<div class="result yes-no"><div style="width: <%= (poll.results[i].answers[0].amount/total * 100).toFixed(0) %>%;"><span><%= (poll.results[i].answers[0].amount/total * 100).toFixed(2) %>%</span></div></div>
+				<div style="clear: both;"></div>
+			</div>
+			<div class="answer-bar">
+				<div class="ans yes-no"><span><%= poll.results[i].answers[1].answer_text %></span></div>
+				<div class="result yes-no"><div style="width: <%= (poll.results[i].answers[1].amount/total * 100).toFixed(0) %>%;"><span><%= (poll.results[i].answers[1].amount/total * 100).toFixed(2) %>%</span></div></div>
+				<div style="clear: both;"></div>
+			</div>
+
+			<% if (skipIdx >= 0) { %>
+
+			<div class="answer-bar skip">
+				<span>Skipped by <%= poll.results[i].answers[skipIdx].amount %> player<%= poll.results[i].answers[skipIdx].amount > 1 ? 's' : ''%>.</span>
+			</div>
+
+			<% } %>
+		<%
+			} else if (poll.results[i].type === 'other') {
+				for (var j = 0; j < poll.results[i].answers.length; j++) {
+					if (skipIdx === -1 || j !== skipIdx) {
+		%>
+			<div class="answer-bar">
+				<div class="ans"><span><%= poll.results[i].answers[j].answer_text %></span></div>
+				<div class="result"><div style="width: <%= (poll.results[i].answers[j].amount/total * 100).toFixed(0) %>%;"><span><%= (poll.results[i].answers[j].amount/total * 100).toFixed(2) %>%</span></div></div>
+				<div style="clear: both;"></div>
+			</div>
+
+		<% 	} else { %>
+			<div class="answer-bar skip">
+				<span>Skipped by <%= poll.results[i].answers[skipIdx].amount %> player<%= poll.results[i].answers[skipIdx].amount > 1 ? 's' : ''%>.</span>
+			</div>
+		<%	}
+			 } %>
+
+
+	<%	} %>
+	</div>
+
+	<% }	%>
+
+	</div>
+
+	<div class="footer">
+		<span>Created by Tchervychek in 2016</span><br>
+		<span><em>There will be Light.</em></span>
+	</div>
+
+</div>
+</body>
+
+</html>

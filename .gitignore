@@ -1,0 +1,8 @@
+# NodeJS
+node_modules
+
+# tmp directory
+tmp
+
+# Database Parameters
+db-params.json

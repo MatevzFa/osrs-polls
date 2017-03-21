@@ -1,0 +1,188 @@
+body {
+    margin: 0;
+    background-color: #F5F5F5;
+    padding-bottom: 50px;
+}
+
+.webpage-wrapper {
+    width: 1000px;
+    margin: 0 auto;
+}
+
+.content-section {
+    background-color: #FFF;
+    border: 1px solid #E5E5E5;
+    padding: 15px;
+    margin: 0.8em 0;
+}
+
+h1, h2, h3 {
+    font-family: 'Roboto Light';
+    font-weight: 400;
+    padding: 0;
+    margin: 0;
+}
+.header h1, .header h2, .header h3 {
+    text-align: center;
+}
+
+h1 {
+    font-size: 3em;
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+h2 {
+    font-size: 2em;
+    margin-bottom: 25px;
+}
+
+h3 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+p {
+    font-family: 'Roboto Light';
+    font-size: 1em;
+    text-align: justify;
+    margin-bottom: 15px;
+    line-height: 1.4em;
+}
+
+.p-wrap {
+    column-count: 2;
+    -webkit-column-count: 2;
+    -moz-column-count: 2;
+}
+
+.footer {
+
+    font-family: 'Roboto Light';
+    text-align: center;
+    color: #BBB;
+    font-size: 0.8em;
+    line-height: 1.7em;
+}
+
+td p {
+    text-align: right;
+    padding-right: 5px;
+}
+
+.answer-bar {
+  margin-top: 1em;
+  position: relative;
+  width: 100%;
+  font-family: 'Roboto Light';
+}
+.answer-bar.skip span {
+  color: #777;
+  font-size: 0.9em;
+}
+
+.ans {
+  width: calc(30% - 0.7em);
+  position: relative;
+  float: left;
+  line-height: 1.5em;
+  text-align: justify;
+  text-align: right;
+  color: #000;
+  font-size: 0.9em;
+  overflow: hidden;
+  padding-right: 0.7em;
+  color: #777;
+}
+.ans.yes-no {
+  width: calc(10% - 0.7em);
+}
+.ans span {
+}
+
+.result {
+  /*background-color: rgba(0,0,0,0.5);*/
+  width: 70%;
+  height: 100%;
+  position: absolute;
+  right: 0; top: 0;
+
+  font-family: 'Roboto';
+  /*color: #888;*/
+  font-size: 0.9em;
+}
+.result.yes-no {
+  width: 90%;
+}
+.result div {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  position: absolute;
+  top: calc(50% - 0.75em);
+  line-height: 1.4em;
+  height: 1.5em;
+  background-color: #DDD;
+  border: 0.1em solid #CCC;
+  border-left: 0.2em solid #CCC;
+  text-align: right;
+  overflow: visible;
+}
+.result div span {
+  font-family: 'Roboto Light';
+  color: #999;
+  padding-right: 0.3em;
+  font-size: 0.8em;
+}
+
+.poll-link {
+    font-family: 'Roboto Light';
+    font-weight: 400;
+    font-size: 0.9em;
+    text-align: justify;
+    line-height: 2em;
+}
+.poll-link a {
+    text-decoration: none;
+    padding-top: 0.55em; padding-bottom: 0.55em;
+    -moz-transition: padding-left 0.1s;
+    -webkit-transition: padding-left 0.1s;
+    -o-transition: padding-left 0.1s;
+    transition: padding-left 0.1s;
+}
+
+.poll-link:hover > a {
+    padding-left: 8px;
+}
+
+.poll-link a {
+    color: black;
+}
+
+.navbar {
+    /*height: 2.4em;*/
+    padding: 0;
+
+}
+.navbar div {
+    float:left;
+}
+.navbar a, .navbar a:active, .navbar a:visited {
+    text-decoration: none;
+    color: #000;
+    font-family: 'Roboto Light';
+    font-size: 1.5em;
+    display: inline-block;
+    padding: 3px 20px 3px 20px;
+    /*border-right: 1px solid #E5E5E5;*/
+    /*background-color: #F8F8F8;*/
+    /*background-color: #F00;*/
+}
+
+.navbar a:hover {
+    /*background-color: #F4F4F4;*/
+    /*background-color: #0F0;*/
+    /*background-color: #E8E8E8;*/
+    padding-bottom: 1px;
+    border-bottom: 2px solid black;
+}

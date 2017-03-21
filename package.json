@@ -1,0 +1,17 @@
+
+{
+  "name"         : "osrs-polls",
+  "version"      : "1.0.0",
+  "description"  : "Scrape Old School RuneScape poll results",
+  "main"         : "server.js",
+  "author"       : "MatevzFa",
+  "dependencies" : {
+    "express"    : "latest",
+    "request"    : "latest",
+    "cheerio"    : "latest",
+    "ejs"        : "latest",
+    "mysql"      : "latest",
+    "cached-request" : "latest",
+    "fs-extra"   : "latest"
+  }
+}

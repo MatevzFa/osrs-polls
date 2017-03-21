@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Old School RuneScape Poll Watch</title>
+
+	<meta charset="utf-8">
+	<link href="/style.css" rel="stylesheet" type="text/css">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,700,400italic|Roboto+Slab:400,700' rel='stylesheet' type='text/css'>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="/script.js"></script>
+</head>
+
+<body>
+<div class="webpage-wrapper">
+
+	<div class="header content-section">
+		<h1>Old School RuneScape Poll Watch</h1>
+		<h2>Poll archive</h2>
+	</div>
+
+	<div class="content-section navbar">
+		<a href="/">Home
+		<a href="/archive">Archive
+
+		</a>
+	</div>
+
+	<div class="content-section navbar">
+		<% for (var i = 0; i < years.length; i++) { %>
+			<a href="/archive/<%= years[i] %>"><%= years[i] %>
+		<%}%>
+		</a>
+	</div>
+
+	<div id="content">
+
+		<div class="content-section">
+			<% for (var i = 0; i < archive.length; i++) { %>
+
+			<span class="poll-link">
+				<a href="/poll/<%= archive[i].poll_ID %>">
+					<strong><%= archive[i].title %></strong>
+					<em>(<%= archive[i].date.toDateString().substring(4) %>)</em>
+				</a>
+			</span><br>
+
+			<% } %>
+		</div>
+
+	</div>
+
+	<div class="footer">
+		<span>Created by Tchervychek in 2016</span><br>
+		<span><em>There will be Light.</em></span>
+	</div>
+
+</div>
+</body>
+
+</html>
