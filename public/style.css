@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700');
+
 body {
     margin: 0;
     background-color: #F5F5F5;
@@ -17,8 +19,8 @@ body {
 }
 
 h1, h2, h3 {
-    font-family: 'Roboto Light';
-    font-weight: 400;
+    font-family: 'Roboto';
+    font-weight: 300;
     padding: 0;
     margin: 0;
 }
@@ -43,7 +45,8 @@ h3 {
 }
 
 p {
-    font-family: 'Roboto Light';
+    font-family: 'Roboto';
+    font-weight: 300;
     font-size: 1em;
     text-align: justify;
     margin-bottom: 15px;
@@ -58,7 +61,8 @@ p {
 
 .footer {
 
-    font-family: 'Roboto Light';
+    font-family: 'Roboto';
+    font-weight: 300;
     text-align: center;
     color: #BBB;
     font-size: 0.8em;
@@ -74,7 +78,8 @@ td p {
   margin-top: 1em;
   position: relative;
   width: 100%;
-  font-family: 'Roboto Light';
+  font-family: 'Roboto';
+    font-weight: 300;
 }
 .answer-bar.skip span {
   color: #777;
@@ -129,15 +134,16 @@ td p {
   overflow: visible;
 }
 .result div span {
-  font-family: 'Roboto Light';
-  color: #999;
-  padding-right: 0.3em;
-  font-size: 0.8em;
+    font-family: 'Roboto';
+    font-weight: 300;
+    color: #999;
+    padding-right: 0.3em;
+    font-size: 0.8em;
 }
 
 .poll-link {
-    font-family: 'Roboto Light';
-    font-weight: 400;
+    font-family: 'Roboto';
+    font-weight: 300;
     font-size: 0.9em;
     text-align: justify;
     line-height: 2em;
@@ -170,7 +176,8 @@ td p {
 .navbar a, .navbar a:active, .navbar a:visited {
     text-decoration: none;
     color: #000;
-    font-family: 'Roboto Light';
+    font-family: 'Roboto';
+    font-weight: 300;
     font-size: 1.5em;
     display: inline-block;
     padding: 3px 20px 3px 20px;

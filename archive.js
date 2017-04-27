@@ -22,6 +22,8 @@ const URL_BASE_POLL = 'http://services.runescape.com/m=poll/oldschool/results.ws
 
 var LIVE_POLL_ID = null;
 
+const INTERVAL = 5;
+
 function getLivePollId () {
   request('http://services.runescape.com/m=poll/oldschool/index.ws', (error, response, html) => {
     if (!error) {
@@ -252,7 +254,7 @@ function runAtMinute (minute, callback) {
 
 function startLivePollParser () {
   console.log('[archive] Starting live poll parser');
-  runAtMinute(15, () => {
+  runAtMinute(INTERVAL, () => {
     parsePollById(LIVE_POLL_ID, true);
   });
 }
