@@ -26,4 +26,4 @@ By default, [app.js](app.js) runs on port 8080. If you are running the web serve
 
 ### Archive
 
-The [archive](archive.js) connects to the database specified in [db-params.json](###-Archive's-db-params.json). Every `INTERVAL` minutes (relative to XXh 00m 00s), it will pull data from the poll that is currently live, and save the data into the database.
+The [archive](archive.js) connects to the database specified in [db-params.json](#archives-db-paramsjson). Every `INTERVAL` minutes (relative to XXh 00m 00s), it will pull data from the poll that is currently live, and save the data into the database.
