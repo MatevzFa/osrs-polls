@@ -29,7 +29,7 @@ const INTERVAL = 5;
 function getLivePollId() {
     return new Promise((resolve, reject) => {
         request('http://services.runescape.com/m=poll/oldschool/index.ws', (error, response, html) => {
-            if (!error) {
+            if (!error) {   
                 var $ = cheerio.load(html);
                 var id = $('div.current a').attr('href');
                 if (id) {
@@ -137,8 +137,10 @@ function updateArchivedPolls() {
     connection.query(`SELECT * FROM poll WHERE poll_ID != ${(LIVE_POLL_ID ? LIVE_POLL_ID : 0)}`, (error, rows, fields) => {
         if (error) console.log(error)
         else {
-            for (let i = 0; i < rows.lenght; i++) {
-                parsePollById(rows[i].poll_ID, false);
+            for (let i = 0; i < rows.length; i++) {
+                setTimeout(function() {
+                    parsePollById(rows[i].poll_ID, false);
+                }, i * 200); 
             }
         }
     });
