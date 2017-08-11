@@ -17,7 +17,11 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Archive",
-            "program": "${workspaceRoot}/archive.js"
+            "program": "${workspaceRoot}/archive.js",
+            "console": "integratedTerminal",
+            "env": {
+                "LOG_LEVEL": "info"
+            }
         }
     ]
 }

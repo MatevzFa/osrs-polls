@@ -10,6 +10,9 @@ const request = require('request');
 const cheerio = require('cheerio');
 const mysql = require('mysql');
 
+const log = require('npmlog');
+log.level = process.env.LOG_LEVEL;
+
 const dbParams = require('./db-params.json');
 
 const URL_ARCHIVE = 'http://services.runescape.com/m=poll/oldschool/archive.ws';
@@ -29,9 +32,9 @@ function dbConnection(callback) {
     cbPromise
         .then(() => connection.end())
         .catch((err) => {
-            if (err.message) console.error(err.message);
-            else if (err.code) console.error(err.code);
-            else if (err) console.error(err);
+            if (err.message) log.error('[archive]', err.message);
+            else if (err.code) log.error('[archive]', err.code);
+            else if (err) log.error('[archive]', err);
             connection.end();
         });
 }
@@ -39,11 +42,11 @@ function dbConnection(callback) {
 function insertPolls(polls) {
     dbConnection((connection, resolve, reject) => {
 
-        connection.query('INSERT INTO poll (poll_ID, title, date) VALUES ?', [polls], (err, results) => {
-            if (err && err.code !== 'ER_DUP_ENTRY') {
+        connection.query('INSERT IGNORE INTO poll (poll_ID, title, date) VALUES ?', [polls], (err, results) => {
+            if (err) {
                 reject(err);
             } else {
-                console.log('[archive] Inserted %d polls.', results.affectedRows);
+                log.verbose('[archive]', 'Inserted %d polls.', results.affectedRows);
                 resolve();
             }
         });
@@ -54,11 +57,12 @@ function insertQuestions(questions) {
     return new Promise((insertResolve, insertReject) => {
         dbConnection((connection, resolve, reject) => {
 
-            connection.query('INSERT INTO question (poll_ID, question_ID, question_text, question_type) VALUES ?', [questions], (err) => {
-                if (err && err.code !== 'ER_DUP_ENTRY') {
+            connection.query('INSERT IGNORE INTO question (poll_ID, question_ID, question_text, question_type) VALUES ?', [questions], (err, results) => {
+                if (err) {
                     reject(err);
                     insertReject(err);
                 } else {
+                    log.verbose('[archive]', 'Inserted %d questions.', results.affectedRows);
                     resolve();
                     insertResolve();
                 }
@@ -71,11 +75,12 @@ function insertAnswers(answers) {
     return new Promise((insertResolve, insertReject) => {
         dbConnection((connection, resolve, reject) => {
 
-            connection.query('INSERT INTO answer (poll_ID, question_ID, answer_ID, answer_text) VALUES ?', [answers], (err) => {
-                if (err && err.code !== 'ER_DUP_ENTRY') {
+            connection.query('INSERT IGNORE INTO answer (poll_ID, question_ID, answer_ID, answer_text) VALUES ?', [answers], (err, results) => {
+                if (err) {
                     reject(err);
                     insertReject(err);
                 } else {
+                    log.verbose('[archive]', 'Inserted %d answers.', results.affectedRows);
                     resolve();
                     insertResolve();
                 }
@@ -87,10 +92,11 @@ function insertAnswers(answers) {
 function insertVotes(votes) {
 
     dbConnection((connection, resolve, reject) => {
-        connection.query('INSERT INTO votes (poll_ID, question_ID, answer_ID, amount, data_time) VALUES ?', [votes], (err) => {
-            if (err && err.code !== 'ER_DUP_ENTRY') {
+        connection.query('INSERT IGNORE INTO votes (poll_ID, question_ID, answer_ID, amount, data_time) VALUES ?', [votes], (err, results) => {
+            if (err) {
                 reject(err);
             } else {
+                log.verbose('[archive]', 'Inserted results for %d answers.', results.affectedRows);
                 resolve();
             }
         });
@@ -110,20 +116,20 @@ function getLivePollId() {
                     var newLivePoll = id.replace('results.ws?id=', '');
                     if (newLivePoll != LIVE_POLL_ID) {
                         LIVE_POLL_ID = newLivePoll;
-                        console.log('[archive] New Live poll with ID %d.', LIVE_POLL_ID);
+                        log.info('[archive]', 'New Live poll with ID %d.', LIVE_POLL_ID);
                         addLiveToArchive();
                     }
                     resolve();
 
                 } else if (LIVE_POLL_ID) {
-                    console.log('[archive] Poll with ID %d has now closed.', LIVE_POLL_ID);
+                    log.info('[archive]', 'Poll with ID %d has now closed.', LIVE_POLL_ID);
                     reject();
                     LIVE_POLL_ID = null;
                 } else {
                     reject();
                 }
             } else {
-                console.error(error);
+                log.error('[archive]', error.message);
                 reject();
             }
         });
@@ -135,7 +141,8 @@ function getLivePollId() {
  */
 function addLiveToArchive() {
     request(URL_BASE_POLL + LIVE_POLL_ID, (error, response, html) => {
-        if (error) console.log(error);
+        if (error)
+            log.error(error.message);
         else {
             let $ = cheerio.load(html);
             let fullTitle = $('div.widescroll-content h2').text();
@@ -147,14 +154,13 @@ function addLiveToArchive() {
                 date: date
             };
             dbConnection((connection, resolve, reject) => {
-                connection.query('INSERT INTO poll SET ?', poll, (err) => {
-                    if (err && err.code !== 'ER_DUP_ENTRY')
+                connection.query('INSERT IGNORE INTO poll SET ?', poll, (err) => {
+                    if (err)
                         reject(err);
-                    else if (!err) {
-                        console.log(`[archive] Successful insert of live poll '${poll.poll_ID}'`);
+                    else {
+                        log.info('[archive]', 'Successful insert of live poll \'%d\'', poll.poll_ID);
                         resolve();
-                    } else
-                        resolve();
+                    }
                 });
             });
         }
@@ -165,18 +171,18 @@ function addLiveToArchive() {
  * Updates table 'poll' with poll_IDs, titles and dates, from poll archive
  */
 function updatePollArchive() {
-    console.log('[archive] Updating poll archive.');
+    log.info('[archive]', 'Updating poll archive.');
 
     request(URL_ARCHIVE, (error, response, html) => {
         if (error)
-            console.log(error);
+            log.error(error.message);
         else {
             let $ = cheerio.load(html);
             let years = $('div.archiveYears p').text().match(/[0-9]+/g);
             for (let i = 0; i < years.length; i++) {
                 request(URL_BASE_ARCHIVE_BY_YEAR + years[i], (error, response, html) => {
                     if (error)
-                        console.log(error);
+                        log.error(error.message);
                     else {
                         let $ = cheerio.load(html);
                         let pollCount = $('.widescroll-content table tr').length;
@@ -206,7 +212,7 @@ function updatePollArchive() {
  * answers and results, for poll_IDs from 'poll'
  */
 function updateArchivedPolls() {
-    console.log('[archive] Updating archived polls.');
+    log.info('[archive]', 'Updating archived polls.');
     let sql = `
         SELECT poll_ID FROM poll
         WHERE
@@ -239,7 +245,7 @@ function parsePollById(poll_ID, isLive) {
     request(URL_BASE_POLL + poll_ID, (error, response, html) => {
 
         if (response.statusCode != 200) {
-            console.log('[archive] Could not GET data for poll %d. Retrying in 5 seconds.', poll_ID);
+            log.error('[archive] Could not GET data for poll %d. Retrying in 5 seconds.', poll_ID);
             setTimeout(() => {
                 parsePollById(poll_ID, isLive);
             }, 5000);
@@ -247,14 +253,13 @@ function parsePollById(poll_ID, isLive) {
         }
 
         let date;
-        if (isLive) {
+        if (isLive)
             date = new Date(response.headers.date).toISOString();
-            console.log('my: %s              jagex: %s', (new Date()).toISOString(), date);
-            return;
-        } else
+        else
             date = null;
 
-        if (error) console.log(error);
+        if (error)
+            log.error(error.message);
         else {
             let $ = cheerio.load(html);
 
@@ -347,7 +352,7 @@ function runAtMinute(minute, callback) {
 }
 
 function startLivePollParser() {
-    console.log('[archive] Starting live poll parser');
+    log.info('[archive]', 'Starting live poll parser');
     runAtMinute(INTERVAL, () => {
         let livePromise = getLivePollId();
         livePromise
@@ -365,5 +370,5 @@ let startupActionSeq = [
     startLivePollParser
 ]
 for (let i = 0; i < startupActionSeq.length; i++) {
-    setTimeout(startupActionSeq[i], i * 5000);
+    setTimeout(startupActionSeq[i], i * 2500);
 }
