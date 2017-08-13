@@ -103,34 +103,41 @@ function insertVotes(votes) {
     });
 }
 
+let newPollResolves = {
+    POLL_NEW: 0,
+    POLL_ONGOING: 2,
+    POLL_NONE: 3
+}
+
 /**
  * Fetches and stores live poll id, if present
  */
 function getLivePollId() {
     return new Promise((resolve, reject) => {
         request('http://services.runescape.com/m=poll/oldschool/index.ws', (error, response, html) => {
-            if (!error) {
+
+            if (error) {
+                reject(error);
+
+            } else {
+
                 var $ = cheerio.load(html);
                 var id = $('div.current a').attr('href');
                 if (id) {
                     var newLivePoll = id.replace('results.ws?id=', '');
                     if (newLivePoll != LIVE_POLL_ID) {
                         LIVE_POLL_ID = newLivePoll;
-                        log.info('[archive]', 'New Live poll with ID %d.', LIVE_POLL_ID);
-                        addLiveToArchive();
-                    }
-                    resolve();
+                        resolve(newPollResolves.POLL_NEW);
+                    } else
+                        resolve(newPollResolves.POLL_ONGOING);
 
                 } else if (LIVE_POLL_ID) {
-                    log.info('[archive]', 'Poll with ID %d has now closed.', LIVE_POLL_ID);
-                    reject();
+                    resolve(LIVE_POLL_ID);
                     LIVE_POLL_ID = null;
+
                 } else {
-                    reject();
+                    resolve(newPollResolves.POLL_NONE);
                 }
-            } else {
-                log.error('[archive]', error.message);
-                reject();
             }
         });
     });
@@ -140,30 +147,36 @@ function getLivePollId() {
  * Adds live poll to the poll archive
  */
 function addLiveToArchive() {
-    request(URL_BASE_POLL + LIVE_POLL_ID, (error, response, html) => {
-        if (error)
-            log.error(error.message);
-        else {
-            let $ = cheerio.load(html);
-            let fullTitle = $('div.widescroll-content h2').text();
-            let date = dateStringToISO(fullTitle);
-            let title = fullTitle.substring(0, fullTitle.length - date.length - 3);
-            let poll = {
-                poll_ID: LIVE_POLL_ID,
-                title: title,
-                date: date
-            };
-            dbConnection((connection, resolve, reject) => {
-                connection.query('INSERT IGNORE INTO poll SET ?', poll, (err) => {
-                    if (err)
-                        reject(err);
-                    else {
-                        log.info('[archive]', 'Successful insert of live poll \'%d\'', poll.poll_ID);
-                        resolve();
-                    }
+    return new Promise((resolve, reject) => {
+
+        request(URL_BASE_POLL + LIVE_POLL_ID, (error, response, html) => {
+            if (error)
+                reject(error)
+            else {
+                let $ = cheerio.load(html);
+                let fullTitle = $('div.widescroll-content h2').text();
+                let date = dateStringToISO(fullTitle);
+                let title = fullTitle.substring(0, fullTitle.length - date.length - 3);
+                let poll = {
+                    poll_ID: LIVE_POLL_ID,
+                    title: title,
+                    date: date
+                };
+                log.verbose('[archive]', 'Adding live poll to the archive.');
+                dbConnection((connection, resolveDb, rejectDb) => {
+                    connection.query('INSERT IGNORE INTO poll SET ?', poll, (err) => {
+                        if (err) {
+                            rejectDb(err);
+                            reject();
+                        } else {
+                            log.info('[archive]', 'Successful insert of live poll \'%d\'', poll.poll_ID);
+                            resolveDb();
+                            resolve();
+                        }
+                    });
                 });
-            });
-        }
+            }
+        });
     });
 }
 
@@ -226,7 +239,11 @@ function updateArchivedPolls() {
             else {
                 for (let i = 0; i < rows.length; i++) {
                     setTimeout(function () {
-                        parsePollById(rows[i].poll_ID, false);
+                        parsePollQuestions(rows[i].poll_ID)
+                            .then(() => {
+                                parsePollResults(rows[i].poll_ID, false);
+                            })
+                            .catch(() => { });
                     }, i * 200);
                 }
                 resolve();
@@ -237,35 +254,30 @@ function updateArchivedPolls() {
 
 /**
  * Updates tables 'question' and 'answer' with questions and possible answers for given poll_ID
- * @param {number} poll_ID 
- * @param {boolean} isLive 
+ * @param {number} poll_ID
  */
-function parsePollById(poll_ID, isLive) {
+function parsePollQuestions(poll_ID) {
+    return new Promise((resolve, reject) => {
 
-    request(URL_BASE_POLL + poll_ID, (error, response, html) => {
+        request(URL_BASE_POLL + poll_ID, (error, response, html) => {
 
-        if (response.statusCode != 200) {
-            log.error('[archive] Could not GET data for poll %d. Retrying in 5 seconds.', poll_ID);
-            setTimeout(() => {
-                parsePollById(poll_ID, isLive);
-            }, 5000);
-            return;
-        }
+            if (error) {
+                log.error(error.message);
+                return;
+            }
 
-        let date;
-        if (isLive)
-            date = new Date(response.headers.date).toISOString();
-        else
-            date = null;
+            if (response.statusCode != 200) {
+                log.warn('[archive]', 'Could not GET data for poll %d. Retrying in 5 seconds.', poll_ID);
+                setTimeout(() => {
+                    parsePollById(poll_ID, isLive);
+                }, 5000);
+                return;
+            }
 
-        if (error)
-            log.error(error.message);
-        else {
             let $ = cheerio.load(html);
 
             let questions = [];
             let answers = [];
-            let votes = [];
 
             /*
             if (!isLive)
@@ -293,13 +305,6 @@ function parsePollById(poll_ID, isLive) {
                             a + 1,
                             $('fieldset.question').eq(q).find('table tr').eq(a).find('td').eq(0).text().replace('/\'/g', '')
                         ]);
-                        votes.push([
-                            poll_ID,
-                            q + 1,
-                            a + 1,
-                            parseInt((/\((\d*) votes\)/g).exec($('fieldset.question').eq(q).find('table tr').eq(a).find('td').eq(2).text())[1]),
-                            date
-                        ]);
                     }
                 }
             }
@@ -307,13 +312,65 @@ function parsePollById(poll_ID, isLive) {
             insertQuestions(questions)
                 .then(() => {
                     insertAnswers(answers)
-                        .then(() => {
-                            insertVotes(votes);
-                        })
+                        .then(() => { resolve() })
                         .catch((err) => { });
                 })
                 .catch((err) => { });
+        });
+    });
+}
+
+/**
+ * Inserts results for poll with poll_ID into table 'votes'
+ * @param {number} poll_ID 
+ * @param {boolean} isLive 
+ */
+function parsePollResults(poll_ID, isLive) {
+
+    request(URL_BASE_POLL + poll_ID, (error, response, html) => {
+
+        if (error) {
+            log.error(error.message);
+            return;
         }
+
+        if (response.statusCode != 200) {
+            log.warn('[archive]', 'Could not GET data for poll %d. Retrying in 5 seconds.', poll_ID);
+            setTimeout(() => {
+                parsePollById(poll_ID, isLive);
+            }, 5000);
+            return;
+        }
+
+        let date;
+        if (isLive)
+            date = new Date(response.headers.date).toISOString();
+        else
+            date = null;
+
+        let $ = cheerio.load(html);
+
+        let votes = [];
+
+        let questionCount = $('fieldset.question').length;
+        for (let q = 0; q < questionCount; q++) {
+
+            let answerCount = $('fieldset.question').eq(q).find('table tr').length
+            for (let a = 0; a < answerCount; a++) {
+
+                if ($('fieldset.question').eq(q).find('table tr').eq(a).find('td').length == 3) {
+                    votes.push([
+                        poll_ID,
+                        q + 1,
+                        a + 1,
+                        parseInt((/\((\d*) votes\)/g).exec($('fieldset.question').eq(q).find('table tr').eq(a).find('td').eq(2).text())[1]),
+                        date
+                    ]);
+                }
+            }
+        }
+        insertVotes(votes);
+
     });
 }
 
@@ -339,7 +396,7 @@ function dateStringToISO(dateString) {
 
 /**
  * 
- * @param {number} minute 
+ * @param {number} minute - Delay between callback calls (starting at XXh:00m:00s)
  * @callback callback
  */
 function runAtMinute(minute, callback) {
@@ -356,10 +413,31 @@ function startLivePollParser() {
     runAtMinute(INTERVAL, () => {
         let livePromise = getLivePollId();
         livePromise
-            .then(() => {
-                parsePollById(LIVE_POLL_ID, true);
+            .then((status) => {
+                if (status === newPollResolves.POLL_NEW) {
+                    log.info('[archive]', 'New poll with ID %d went live!', LIVE_POLL_ID);
+                    addLiveToArchive()
+                        .then(() => {
+                            parsePollQuestions(LIVE_POLL_ID)
+                                .then(() => {
+                                    parsePollResults(LIVE_POLL_ID, true);
+                                })
+                                .catch(() => { });
+                        })
+                        .catch(() => { });
+
+                } else if (status === newPollResolves.POLL_ONGOING) {
+                    log.verbose('[archive]', 'Parsing poll results for live poll %d.', LIVE_POLL_ID);
+                    parsePollResults(LIVE_POLL_ID, true);
+                } else if (status === newPollResolves.POLL_NONE) {
+                    log.verbose('[archive]', 'No currently live polls.');
+                } else {
+                    log.info('[archive]', 'Poll with ID %d has now ended.', status);
+                }
             })
-            .catch(() => { });
+            .catch((error) => {
+                log.error('[archive]', '%s', error.message);
+            });
         ;
     });
 }
