@@ -394,9 +394,14 @@ function dateStringToISO(dateString) {
     return match[3] + '-' + dates[match[2]] + '-' + match[1] + ' ' + match[4]
 }
 
+function dateNow() {
+    let date = new Date();
+    return date.toISOString().substring(0, 19);
+}
+
 /**
- * 
- * @param {number} minute - Delay between callback calls (starting at XXh:00m:00s)
+ * Runs every minute minutes, relative to XXh:00m:00s
+ * @param {number} minute - Delay between callback calls
  * @callback callback
  */
 function runAtMinute(minute, callback) {
@@ -427,7 +432,7 @@ function startLivePollParser() {
                         .catch(() => { });
 
                 } else if (status === newPollResolves.POLL_ONGOING) {
-                    log.verbose('[archive]', 'Parsing poll results for live poll %d.', LIVE_POLL_ID);
+                    log.verbose('[archive]', '[%s] Parsing poll results for live poll %d.', dateNow(), LIVE_POLL_ID);
                     parsePollResults(LIVE_POLL_ID, true);
                 } else if (status === newPollResolves.POLL_NONE) {
                     log.verbose('[archive]', 'No currently live polls.');
