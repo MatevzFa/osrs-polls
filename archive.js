@@ -164,12 +164,13 @@ function addLiveToArchive() {
                 };
                 log.verbose('[archive]', 'Adding live poll to the archive.');
                 dbConnection((connection, resolveDb, rejectDb) => {
-                    connection.query('INSERT IGNORE INTO poll SET ?', poll, (err) => {
+                    connection.query('INSERT IGNORE INTO poll SET ?', poll, (err, results) => {
                         if (err) {
                             rejectDb(err);
                             reject();
                         } else {
-                            log.info('[archive]', 'Successful insert of live poll \'%d\'', poll.poll_ID);
+                            if (results.affectedRows > 0)
+                                log.info('[archive]', 'Successful insert of live poll \'%d\'', poll.poll_ID);
                             resolveDb();
                             resolve();
                         }
