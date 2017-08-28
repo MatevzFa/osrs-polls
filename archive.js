@@ -9,6 +9,7 @@
 const request = require('request');
 const cheerio = require('cheerio');
 const mysql = require('mysql');
+const colors = require('colors');
 
 const log = require('npmlog');
 log.level = process.env.LOG_LEVEL;
@@ -46,7 +47,8 @@ function insertPolls(polls) {
             if (err) {
                 reject(err);
             } else {
-                log.verbose('[archive]', 'Inserted %d polls.', results.affectedRows);
+                if (results.affectedRows > 0)
+                    log.verbose('[archive]', 'Inserted %d polls.', results.affectedRows);
                 resolve();
             }
         });
@@ -62,7 +64,8 @@ function insertQuestions(questions) {
                     reject(err);
                     insertReject(err);
                 } else {
-                    log.verbose('[archive]', 'Inserted %d questions.', results.affectedRows);
+                    if (results.affectedRows > 0)
+                        log.verbose('[archive]', 'Inserted %d questions.', results.affectedRows);
                     resolve();
                     insertResolve();
                 }
@@ -80,7 +83,8 @@ function insertAnswers(answers) {
                     reject(err);
                     insertReject(err);
                 } else {
-                    log.verbose('[archive]', 'Inserted %d answers.', results.affectedRows);
+                    if (results.affectedRows > 0)
+                        log.verbose('[archive]', 'Inserted %d answers.', results.affectedRows);
                     resolve();
                     insertResolve();
                 }
@@ -421,7 +425,7 @@ function startLivePollParser() {
         livePromise
             .then((status) => {
                 if (status === newPollResolves.POLL_NEW) {
-                    log.info('[archive]', 'New poll with ID %d went live!', LIVE_POLL_ID);
+                    log.info('[archive]', '%s New poll with ID %d went live!', dateNow().gray, LIVE_POLL_ID);
                     addLiveToArchive()
                         .then(() => {
                             parsePollQuestions(LIVE_POLL_ID)
@@ -433,12 +437,12 @@ function startLivePollParser() {
                         .catch(() => { });
 
                 } else if (status === newPollResolves.POLL_ONGOING) {
-                    log.verbose('[archive]', '[%s] Parsing poll results for live poll %d.', dateNow(), LIVE_POLL_ID);
+                    log.verbose('[archive]', '%s Parsing poll results for live poll %d.', dateNow().gray, LIVE_POLL_ID);
                     parsePollResults(LIVE_POLL_ID, true);
                 } else if (status === newPollResolves.POLL_NONE) {
-                    log.verbose('[archive]', 'No currently live polls.');
+                    log.verbose('[archive]', '%s No currently live polls.', dateNow().gray);
                 } else {
-                    log.info('[archive]', 'Poll with ID %d has now ended.', status);
+                    log.info('[archive]', '%s Poll with ID %d has now ended.', dateNow().gray, status);
                 }
             })
             .catch((error) => {
